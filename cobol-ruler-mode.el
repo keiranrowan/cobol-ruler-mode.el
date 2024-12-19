@@ -8,15 +8,19 @@
   :version "1.0"
   :group 'convenience)
 
-(defcustom cobol-ruler-mode-basic-char ?\-
+(defcustom cobol-ruler-mode-basic-char ?\ 
   "Basic column character."
   :type 'integer)
 
-(defcustom cobol-ruler-mode-indent-char ?\+
+(defcustom cobol-ruler-mode-filler-char ?\+ 
+  "Basic column character."
+  :type 'integer)
+
+(defcustom cobol-ruler-mode-comment-char ?\.
   "Character displayed in indent columns."
   :type 'integer)
 
-(defcustom cobol-ruler-mode-indicator-char ?\*
+(defcustom cobol-ruler-mode-indicator-char ?\-
   "Character displayed in indicator column."
   :type 'integer)
 
@@ -26,10 +30,6 @@
 
 (defcustom cobol-ruler-mode-B-char ?B
   "Character displayed in B column."
-  :type 'integer)
-
-(defcustom cobol-ruler-mode-number-char ?\|
-  "Character displayed in number column."
   :type 'integer)
 
 (defface cobol-ruler-mode-default
@@ -80,7 +80,7 @@
                )))
   "Face used to highlight number graduations.")
 
-(defface cobol-ruler-mode-indent-column
+(defface cobol-ruler-mode-comment-column
   '((t
      (:inherit cobol-ruler-mode-default
                :foreground "black"
@@ -107,6 +107,13 @@
                :foreground "black"
                )))
   "Face used to highlight B column.")
+
+(defface cobol-ruler-mode-pgmid-column
+  '((t
+     (:inherit cobol-ruler-mode-default
+               :foreground "black"
+               )))
+  "Face used to highlight program-id columns.")
 
 (defface cobol-ruler-mode-number-column
   '((t
@@ -207,28 +214,33 @@ Optional argument PROPS specifies other text properties to apply."
 		  k c)
 	(while (< i w)
 	  (cond
-	   ;; Indent Numbers
-	   ((and (= (mod j 10) 0) (> j 0) (< j 80))
-        (setq c (number-to-string (/ j 10))
-              m (length c)
+	   ((and (= (mod j 10) 0) (> j 79))
+        (setq m (length c)
               k (- i 1))
-		(put-text-property
-         i (1+ i) 'face 'cobol-ruler-mode-column-number
-         ruler)
         (while (and (> m 0) (>= k 0))
           (aset ruler k (aref c (setq m (1- m))))
           (setq k (1- k))))
-	   ;; Indent Column
-	   ((or (= j 4) (= j 14) (= j 24) (= j 34) (= j 44) (= j 54) (= j 64) (= j 74))
-		(aset ruler i cobol-ruler-mode-indent-char)
+	   ;; Filler Columns
+	   ((and (> j 7) (< j 11))
+	    (aset ruler i cobol-ruler-mode-filler-char)
 		(put-text-property
-		 i (1+ i) 'face 'cobol-ruler-mode-indent-column
+		 i (1+ i) 'face 'cobol-ruler-mode-comment-column
 		 ruler))
-	   ;; Number Column
-	   ((or (= j 5) (= j 72) (= j 79))
-		(aset ruler i cobol-ruler-mode-number-char)
+	   ((and (> j 11) (< j 72))
+	    (aset ruler i cobol-ruler-mode-filler-char)
 		(put-text-property
-		 i (1+ i) 'face 'cobol-ruler-mode-number-column
+		 i (1+ i) 'face 'cobol-ruler-mode-comment-column
+		 ruler))
+	   ((and (> j 77) (< j 80))
+	    (aset ruler i cobol-ruler-mode-filler-char)
+		(put-text-property
+		 i (1+ i) 'face 'cobol-ruler-mode-comment-column
+		 ruler))
+	   ;; Comment Columns
+	   ((or (= j 0) (= j 1) (= j 2) (= j 3) (= j 4) (= j 5))
+		(aset ruler i cobol-ruler-mode-comment-char)
+		(put-text-property
+		 i (1+ i) 'face 'cobol-ruler-mode-comment-column
 		 ruler))
 	   ;; Indicator Column
 	   ((= j 6)
@@ -247,7 +259,38 @@ Optional argument PROPS specifies other text properties to apply."
 		(aset ruler i cobol-ruler-mode-B-char)
 		(put-text-property
 		 i (1+ i) 'face 'cobol-ruler-mode-B-column
-		 ruler)))
+		 ruler))
+	   ;; Pgm-id Columns
+	  ((= j 72)
+	   (aset ruler i ?\P)
+	   (put-text-property
+	    i (1+ i) 'face 'cobol-ruler-mode-B-column
+	    ruler))
+	  ((= j 73)
+	   (aset ruler i ?\g)
+	   (put-text-property
+	    i (1+ i) 'face 'cobol-ruler-mode-B-column
+	    ruler))
+	  ((= j 74)
+	   (aset ruler i ?\m)
+	   (put-text-property
+	    i (1+ i) 'face 'cobol-ruler-mode-B-column
+	    ruler))
+	  ((= j 75)
+	   (aset ruler i ?\-)
+	   (put-text-property
+	    i (1+ i) 'face 'cobol-ruler-mode-B-column
+	    ruler))
+	  ((= j 76)
+	   (aset ruler i ?\i)
+	   (put-text-property
+	    i (1+ i) 'face 'cobol-ruler-mode-B-column
+	    ruler))
+	  ((= j 77)
+	   (aset ruler i ?d)
+	   (put-text-property
+	    i (1+ i) 'face 'cobol-ruler-mode-B-column
+	    ruler)))
 	  (setq i (1+ i)
 			j (1+ j)))
 	(if (nth 2 (window-fringes))
